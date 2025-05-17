@@ -1,3 +1,15 @@
 package com.juan.db.entity
 
-data class CityEntity()
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "cities")
+data class CityEntity(
+    @PrimaryKey val id: Long,
+    val name: String,
+    val country: String,
+    val latitude: Double,
+    val longitude: Double,
+    val coordinatesString: String,
+    val isFavorite: Boolean = false,
+)

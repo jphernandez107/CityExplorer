@@ -1,10 +1,15 @@
 package com.juan.domain.usecase
 
-import com.juan.domain.model.City
 import com.juan.domain.repository.CityRepository
 
-class AddCityToFavoritesUseCase(
+class UpdateCityFavoriteStatusUseCase(
     private val cityRepository: CityRepository,
 ) {
-    suspend operator fun invoke(city: City) = cityRepository.addCityToFavorites(city)
+    suspend operator fun invoke(
+        cityId: Long,
+        isFavorite: Boolean,
+    ) = cityRepository.updateCityFavoriteStatus(
+        cityId = cityId,
+        isFavorite = isFavorite,
+    )
 }

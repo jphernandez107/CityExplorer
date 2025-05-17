@@ -2,8 +2,8 @@ package com.juan.domain.usecase
 
 import com.juan.domain.repository.CityRepository
 
-class SearchCitiesUseCase(
+class GetAllCitiesUseCase(
     private val cityRepository: CityRepository,
 ) {
-    operator fun invoke(query: String) = cityRepository.searchCities(query)
+    operator fun invoke() = cityRepository.getAllCities()
 }
