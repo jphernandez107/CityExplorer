@@ -33,32 +33,4 @@ data class CityItemViewState(
     val country: String,
     val coordinates: String,
     val favoriteState: FavoriteState,
-) {
-    @Stable
-    sealed interface FavoriteState {
-        @Immutable
-        data object Favorite : FavoriteState
-
-        @Immutable
-        data object NotFavorite : FavoriteState
-
-        @Immutable
-        data object Loading : FavoriteState
-
-        fun toBoolean(): Boolean {
-            return when (this) {
-                is Favorite -> true
-                is NotFavorite -> false
-                is Loading -> false
-            }
-        }
-
-        companion object {
-            fun from(isFavorite: Boolean) = if (isFavorite) {
-                Favorite
-            } else {
-                NotFavorite
-            }
-        }
-    }
-}
+)

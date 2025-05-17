@@ -8,13 +8,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,16 +29,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
+import androidx.navigation.NavController
 import com.juan.ui.citylist.CityItemViewState
 import com.juan.ui.citylist.CityListUiEvent
 import com.juan.ui.citylist.CityListViewModel
 import com.juan.ui.citylist.CityListViewState
+import com.juan.ui.citylist.CityNavigationEvent
+import com.juan.ui.citylist.FavoriteState
 import com.juan.ui.citylist.SearchBarViewState
 import com.juan.ui.components.CitySearchBar
+import com.juan.ui.components.FavoriteIcon
+import com.juan.ui.navigation.Screen
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun CityListScreen(
     viewModel: CityListViewModel = hiltViewModel(),
+    navController: NavController,
 ) {
     val viewState by viewModel.viewState.collectAsState()
     val searchBarViewState by viewModel.searchBarViewState.collectAsState()
@@ -48,6 +56,22 @@ fun CityListScreen(
         searchBarViewState = searchBarViewState,
         onEvent = viewModel::onEvent,
     )
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent
+            .flowWithLifecycle(lifecycleOwner.lifecycle)
+            .collectLatest { event ->
+                when (event) {
+                    is CityNavigationEvent.NavigateToMap -> {
+                        navController.navigate(Screen.CityMap.createRoute(event.cityId))
+                    }
+                    is CityNavigationEvent.NavigateToCityDetails -> {
+                        navController.navigate(Screen.CityDetails.createRoute(event.cityId))
+                    }
+                }
+            }
+    }
 }
 
 
@@ -87,7 +111,8 @@ private fun CityListScreenContent(
                     items(viewState.cities, key = { it.id }) { city ->
                         CityItemCard(
                             city = city,
-                            onClick = { onEvent(CityListUiEvent.OnCityClick(city.id)) },
+                            onRowClick = { onEvent(CityListUiEvent.OnCityClick(city.id)) },
+                            onDetailsClick = { onEvent(CityListUiEvent.OnCityDetailsClick(city.id)) },
                             onFavoriteToggle = {
                                 onEvent(CityListUiEvent.OnCityFavoriteClick(city.id, city.favoriteState))
                             }
@@ -102,14 +127,15 @@ private fun CityListScreenContent(
 @Composable
 private fun CityItemCard(
     city: CityItemViewState,
-    onClick: () -> Unit,
+    onRowClick: () -> Unit,
+    onDetailsClick: () -> Unit = {},
     onFavoriteToggle: () -> Unit,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { onClick() },
+            .clickable { onRowClick() },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(8.dp),
     ) {
@@ -130,34 +156,24 @@ private fun CityItemCard(
                     style = MaterialTheme.typography.labelSmall
                 )
             }
-            IconButton(
-                onClick = onFavoriteToggle,
-                enabled = city.favoriteState !is CityItemViewState.FavoriteState.Loading,
-            ) {
-                FavoriteIcon(city.favoriteState)
+            Row {
+                IconButton(
+                    onClick = onDetailsClick,
+                    enabled = city.favoriteState !is FavoriteState.Loading,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "View Details"
+                    )
+                }
+                IconButton(
+                    onClick = onFavoriteToggle,
+                    enabled = city.favoriteState !is FavoriteState.Loading,
+                ) {
+                    FavoriteIcon(city.favoriteState)
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun FavoriteIcon(favoriteState: CityItemViewState.FavoriteState) {
-    when (favoriteState) {
-        is CityItemViewState.FavoriteState.Loading ->
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                strokeWidth = 2.dp,
-            )
-        is CityItemViewState.FavoriteState.NotFavorite ->
-            Icon(
-                imageVector = Icons.Outlined.FavoriteBorder,
-                contentDescription = "Toggle Favorite"
-            )
-        is CityItemViewState.FavoriteState.Favorite ->
-            Icon(
-                imageVector = Icons.Outlined.Favorite,
-                contentDescription = "Toggle Favorite"
-            )
     }
 }
 
@@ -171,21 +187,21 @@ private fun CityListScreenPreview() = MaterialTheme {
                     id = 1,
                     name = "New York",
                     country = "USA",
-                    favoriteState = CityItemViewState.FavoriteState.Favorite,
+                    favoriteState = FavoriteState.Favorite,
                     coordinates = "40.7128° N, 74.0060° W",
                 ),
                 CityItemViewState(
                     id = 2,
                     name = "Los Angeles",
                     country = "USA",
-                    favoriteState = CityItemViewState.FavoriteState.NotFavorite,
+                    favoriteState = FavoriteState.NotFavorite,
                     coordinates = "34.0522° N, 118.2437° W",
                 ),
                 CityItemViewState(
                     id = 2,
                     name = "Miami",
                     country = "USA",
-                    favoriteState = CityItemViewState.FavoriteState.Loading,
+                    favoriteState = FavoriteState.Loading,
                     coordinates = "32.0522° N, 92.2437° W",
                 ),
             ),

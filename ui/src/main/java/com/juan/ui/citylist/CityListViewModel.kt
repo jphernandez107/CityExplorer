@@ -7,7 +7,9 @@ import com.juan.domain.usecase.FetchAndCacheCitiesUseCase
 import com.juan.domain.usecase.GetAllCitiesUseCase
 import com.juan.domain.usecase.UpdateCityFavoriteStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -30,16 +32,18 @@ class CityListViewModel @Inject constructor(
     private val _searchBarViewState = MutableStateFlow(SearchBarViewState(""))
     val searchBarViewState = _searchBarViewState.asStateFlow()
 
+    private val _navigationEvent = MutableSharedFlow<CityNavigationEvent>()
+    val navigationEvent = _navigationEvent.asSharedFlow()
+
     init {
-        fetchCitiesFromApi()
+        fetchCitiesFromApiIfNeeded()
         observeSearchQuery()
     }
 
-    private fun fetchCitiesFromApi() {
+    private fun fetchCitiesFromApiIfNeeded() {
         viewModelScope.launch {
             _viewState.value = CityListViewState.Loading
             fetchAndCacheCitiesUseCase()
-                .onSuccess { }
                 .onFailure {
                     _viewState.value = CityListViewState.Error.Network
                 }
@@ -85,10 +89,16 @@ class CityListViewModel @Inject constructor(
                 _searchBarViewState.update { it.copy(searchQuery = event.query) }
             }
             is CityListUiEvent.OnCityClick -> {
-                // navigate to map
+                viewModelScope.launch {
+                    _navigationEvent.emit(
+                        CityNavigationEvent.NavigateToMap(
+                            cityId = event.cityId,
+                        )
+                    )
+                }
             }
             is CityListUiEvent.OnCityFavoriteClick -> {
-                updateCityFavoriteState(event.cityId)
+                setCityFavoriteStateToLoading(event.cityId)
                 viewModelScope.launch {
                     updateCityFavoriteStatusUseCase(
                         cityId = event.cityId,
@@ -97,21 +107,30 @@ class CityListViewModel @Inject constructor(
                 }
             }
             is CityListUiEvent.OnRefresh -> {
-                fetchCitiesFromApi()
+                fetchCitiesFromApiIfNeeded()
             }
             is CityListUiEvent.OnOnlyFavoritesClick -> {
                 _searchBarViewState.update { it.copy(onlyFavorites = !it.onlyFavorites) }
             }
+            is CityListUiEvent.OnCityDetailsClick -> {
+                viewModelScope.launch {
+                    _navigationEvent.emit(
+                        CityNavigationEvent.NavigateToCityDetails(
+                            cityId = event.cityId,
+                        )
+                    )
+                }
+            }
         }
     }
 
-    private fun updateCityFavoriteState(cityId: Long) {
+    private fun setCityFavoriteStateToLoading(cityId: Long) {
         _viewState.update {
             when (val state = it) {
                 is CityListViewState.Success -> state.copy(
                     cities = state.cities.map { city ->
                         if (city.id == cityId) {
-                            city.copy(favoriteState = CityItemViewState.FavoriteState.Loading)
+                            city.copy(favoriteState = FavoriteState.Loading)
                         } else {
                             city
                         }
@@ -126,7 +145,7 @@ class CityListViewModel @Inject constructor(
         id = id,
         name = name,
         country = country,
-        favoriteState = CityItemViewState.FavoriteState.from(isFavorite),
+        favoriteState = FavoriteState.from(isFavorite),
         coordinates = coordinatesString,
     )
 }

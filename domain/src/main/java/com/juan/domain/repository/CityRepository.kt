@@ -10,4 +10,5 @@ interface CityRepository {
         cityId: Long,
         isFavorite: Boolean,
     ): Boolean
+    fun getCityById(id: Long): Flow<City?>
 }

@@ -5,6 +5,7 @@ import com.juan.data.service.CityApi
 import com.juan.db.dao.CityDao
 import com.juan.db.entity.CityEntity
 import com.juan.db.mapper.toDomain
+import com.juan.domain.model.City
 import com.juan.domain.repository.CityRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -37,6 +38,9 @@ class CityRepositoryImpl(
         cityId = cityId,
         isFavorite = isFavorite,
     ) > 0
+
+    override fun getCityById(id: Long): Flow<City?> =
+        cityDao.getCityById(id).map { it?.toDomain() }
 
     private fun Flow<List<CityEntity>>.toDomainFlow() =
         map { list ->

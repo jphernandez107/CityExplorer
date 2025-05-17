@@ -20,4 +20,7 @@ interface CityDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM cities LIMIT 1)")
     suspend fun hasCities(): Boolean
+
+    @Query("SELECT * FROM cities WHERE id = :id LIMIT 1")
+    fun getCityById(id: Long): Flow<CityEntity?>
 }
