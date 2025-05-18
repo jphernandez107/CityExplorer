@@ -1,5 +1,6 @@
 package com.juan.ui.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -19,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -53,21 +55,12 @@ fun AppNavHost(
     val cityMapViewModel = hiltViewModel<CityMapViewModel>()
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            if (showTopBar) {
-                CityExplorerTopBar(
-                    title = title,
-                    showBackButton = showBackButton,
-                    onBackClick = { navController.popBackStack() },
-                )
-            }
-        }
+        modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.CityList.route,
-            modifier = modifier.padding(innerPadding),
+            modifier = Modifier.padding(innerPadding),
         ) {
             composable(
                 route = Screen.CityList.route,
@@ -82,6 +75,7 @@ fun AppNavHost(
                 route = Screen.CityMap.route
             ) {
                 CityMapScreen(
+                    navController = navController,
                     cityMapViewModel = cityMapViewModel,
                 )
             }
@@ -91,6 +85,7 @@ fun AppNavHost(
                 val cityDetailsViewModel = hiltViewModel<CityDetailsViewModel>()
                 val cityTitle by cityDetailsViewModel.screenTitle.collectAsState()
                 CityDetailsScreen(
+                    navController = navController,
                     cityDetailsViewModel = cityDetailsViewModel,
                 )
                 LaunchedEffect(cityTitle) {
@@ -99,33 +94,4 @@ fun AppNavHost(
             }
         }
     }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun CityExplorerTopBar(
-    title: String,
-    showBackButton: Boolean,
-    onBackClick: () -> Unit,
-) {
-    TopAppBar(
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-            )
-        },
-        navigationIcon = {
-            if (showBackButton) {
-                IconButton(
-                    onClick = onBackClick,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back Button",
-                    )
-                }
-            }
-        }
-    )
 }

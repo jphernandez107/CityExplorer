@@ -1,8 +1,16 @@
 package com.juan.ui.map.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -12,8 +20,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -27,6 +38,8 @@ import com.juan.ui.map.CityMapViewState
 @Composable
 internal fun CityMapScreen(
     modifier: Modifier = Modifier,
+    showCloseButton: Boolean = true,
+    navController: NavController = rememberNavController(),
     cityMapViewModel: CityMapViewModel = hiltViewModel(),
 ) {
     val viewState by cityMapViewModel.viewState.collectAsState()
@@ -41,6 +54,24 @@ internal fun CityMapScreen(
         MapContent(
             city = city,
         )
+        if (showCloseButton) {
+            IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.background,
+                        shape = CircleShape,
+                    )
+                    .clip(CircleShape),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                )
+            }
+        }
 
         if (viewState is CityMapViewState.Error) {
             LaunchedEffect(Unit) {

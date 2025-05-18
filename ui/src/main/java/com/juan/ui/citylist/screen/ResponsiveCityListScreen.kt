@@ -75,6 +75,7 @@ private fun LandscapeCityListScreen(
                 .padding(top = 8.dp, bottom = 8.dp, end = 8.dp)
                 .clip(RoundedCornerShape(12.dp)),
             cityMapViewModel = cityMapViewModel,
+            showCloseButton = false,
         )
     }
 }

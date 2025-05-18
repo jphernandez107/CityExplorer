@@ -1,5 +1,7 @@
 package com.juan.ui.details.screen
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,8 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,8 +26,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -29,24 +39,38 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.juan.ui.citylist.FavoriteState
 import com.juan.ui.components.FavoriteIcon
+import com.juan.ui.components.TopBar
 import com.juan.ui.details.CityDetailsViewModel
 import com.juan.ui.details.CityDetailsViewState
 import com.juan.ui.map.CityDetailsUiEvent
 
 @Composable
 internal fun CityDetailsScreen(
-    cityDetailsViewModel: CityDetailsViewModel = hiltViewModel()
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    cityDetailsViewModel: CityDetailsViewModel = hiltViewModel(),
 ) {
     val viewState by cityDetailsViewModel.viewState.collectAsState()
-    when (val state = viewState) {
-        is CityDetailsViewState.Loading -> LoadingCityDetailsScreen()
-        is CityDetailsViewState.Error -> ErrorCityDetailsScreen()
-        is CityDetailsViewState.Success -> SuccessCityDetailsScreen(
-            viewState = state,
-            onFavoriteClick = {
-                cityDetailsViewModel.onEvent(CityDetailsUiEvent.OnFavoriteClick(state.favoriteState))
+    val title by cityDetailsViewModel.screenTitle.collectAsState()
+    Column(
+        modifier = modifier,
+    ) {
+        TopBar(
+            title = "City Details",
+            onBackClick = {
+                navController.popBackStack()
             }
         )
+        when (val state = viewState) {
+            is CityDetailsViewState.Loading -> LoadingCityDetailsScreen()
+            is CityDetailsViewState.Error -> ErrorCityDetailsScreen()
+            is CityDetailsViewState.Success -> SuccessCityDetailsScreen(
+                viewState = state,
+                onFavoriteClick = {
+                    cityDetailsViewModel.onEvent(CityDetailsUiEvent.OnFavoriteClick(state.favoriteState))
+                }
+            )
+        }
     }
 }
 
@@ -96,32 +120,74 @@ private fun SuccessCityDetailsScreen(
             .fillMaxSize()
             .padding(16.dp),
     ) {
-        Text(
-            text = "Coordinates",
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Text(
-            text = viewState.coordinates,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = "Favorite: ")
-            IconButton(
-                onClick = onFavoriteClick,
-                enabled = viewState.favoriteState != FavoriteState.Loading,
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+        ) { 
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
             ) {
-                FavoriteIcon(viewState.favoriteState)
+                Text(
+                    text = viewState.name,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = viewState.country,
+                    style = MaterialTheme.typography.titleMedium.copy(),
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Place,
+                        contentDescription = "Location"
+                    )
+                    Text(
+                        text = viewState.coordinates,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    val toggleFavoriteText = when (viewState.favoriteState) {
+                        FavoriteState.Favorite -> "Remove from favorites"
+                        FavoriteState.NotFavorite -> "Add to favorites"
+                        FavoriteState.Loading -> "Loading..."
+                    }
+                    FavoriteIcon(viewState.favoriteState)
+                    Button(
+                        onClick = onFavoriteClick,
+                        enabled = viewState.favoriteState !is FavoriteState.Loading,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.elevatedButtonColors(),
+                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                    ) {
+                        Text(
+                            text = toggleFavoriteText,
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+                }
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(24.dp))
 
         Text(
             text = "Location",
             style = MaterialTheme.typography.titleMedium,
         )
+        Spacer(Modifier.height(8.dp))
         GoogleMap(
             modifier = Modifier
                 .fillMaxWidth()
@@ -135,4 +201,21 @@ private fun SuccessCityDetailsScreen(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CityDetailsScreenPreview() = MaterialTheme {
+    SuccessCityDetailsScreen(
+        viewState = CityDetailsViewState.Success(
+            cityId = 1,
+            name = "New York",
+            country = "US",
+            latitude = 12.34,
+            longitude = 56.78,
+            coordinates = "12.34, 56.78",
+            favoriteState = FavoriteState.Favorite,
+        ),
+        onFavoriteClick = {},
+    )
 }

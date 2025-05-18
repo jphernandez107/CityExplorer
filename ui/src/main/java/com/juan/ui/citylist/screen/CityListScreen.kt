@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -105,36 +106,59 @@ private fun CityListScreenContent(
             onClearClick = { onEvent(CityListUiEvent.OnSearchQueryChange("")) }
         )
 
-        when (viewState) {
-            is CityListViewState.Loading -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+        CityListContent(
+            viewState = viewState,
+            lazyListState = lazyListState,
+            onEvent = onEvent,
+        )
+    }
+}
+
+@Composable
+private fun CityListContent(
+    viewState: CityListViewState,
+    lazyListState: LazyListState,
+    onEvent: (CityListUiEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (viewState) {
+        is CityListViewState.Loading -> {
+            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-            is CityListViewState.Error -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Something went wrong. Try refreshing.")
-                }
+        }
+
+        is CityListViewState.Error -> {
+            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Something went wrong. Try refreshing.")
             }
-            is CityListViewState.Empty -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No cities match your search.")
-                }
+        }
+
+        is CityListViewState.Empty -> {
+            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No cities match your search.")
             }
-            is CityListViewState.Success -> {
-                LazyColumn(
-                    state = lazyListState,
-                ) {
-                    items(viewState.cities, key = { it.id }) { city ->
-                        CityItemCard(
-                            city = city,
-                            onRowClick = { onEvent(CityListUiEvent.OnCityClick(city.id)) },
-                            onDetailsClick = { onEvent(CityListUiEvent.OnCityDetailsClick(city.id)) },
-                            onFavoriteToggle = {
-                                onEvent(CityListUiEvent.OnCityFavoriteClick(city.id, city.favoriteState))
-                            }
-                        )
-                    }
+        }
+
+        is CityListViewState.Success -> {
+            LazyColumn(
+                modifier = modifier.fillMaxHeight(),
+                state = lazyListState,
+            ) {
+                items(viewState.cities, key = { it.id }) { city ->
+                    CityItemCard(
+                        city = city,
+                        onRowClick = { onEvent(CityListUiEvent.OnCityClick(city.id)) },
+                        onDetailsClick = { onEvent(CityListUiEvent.OnCityDetailsClick(city.id)) },
+                        onFavoriteToggle = {
+                            onEvent(
+                                CityListUiEvent.OnCityFavoriteClick(
+                                    city.id,
+                                    city.favoriteState
+                                )
+                            )
+                        }
+                    )
                 }
             }
         }
