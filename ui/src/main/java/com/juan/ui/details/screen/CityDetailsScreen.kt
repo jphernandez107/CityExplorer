@@ -51,7 +51,6 @@ internal fun CityDetailsScreen(
     cityDetailsViewModel: CityDetailsViewModel = hiltViewModel(),
 ) {
     val viewState by cityDetailsViewModel.viewState.collectAsState()
-    val title by cityDetailsViewModel.screenTitle.collectAsState()
     Column(
         modifier = modifier,
     ) {

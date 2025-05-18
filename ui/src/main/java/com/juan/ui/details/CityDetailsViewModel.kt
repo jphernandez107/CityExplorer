@@ -11,10 +11,7 @@ import com.juan.ui.map.CityDetailsUiEvent
 import com.juan.ui.navigation.Screen.Companion.CITY_ID_KEY
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,20 +26,6 @@ class CityDetailsViewModel @Inject constructor(
 
     private val _viewState = MutableStateFlow<CityDetailsViewState>(CityDetailsViewState.Loading)
     val viewState = _viewState.asStateFlow()
-
-    val screenTitle = viewState
-        .map {
-            when (it) {
-                is CityDetailsViewState.Loading -> ""
-                is CityDetailsViewState.Error -> "Error"
-                is CityDetailsViewState.Success -> "${it.name}, ${it.country}"
-            }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = WhileSubscribed(5_000),
-            initialValue = ""
-        )
 
     init {
         fetchCity()
