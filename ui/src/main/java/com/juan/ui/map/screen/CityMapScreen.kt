@@ -1,12 +1,20 @@
 package com.juan.ui.map.screen
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
@@ -22,45 +30,72 @@ internal fun CityMapScreen(
     cityMapViewModel: CityMapViewModel = hiltViewModel(),
 ) {
     val viewState by cityMapViewModel.viewState.collectAsState()
-    when (viewState) {
-        is CityMapViewState.Loading -> Unit
-        is CityMapViewState.Error -> Unit
-        is CityMapViewState.Success -> {
-            val city = (viewState as CityMapViewState.Success).city
-            MapContent(
-                city = city,
-                modifier = modifier
-            )
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val city = (viewState as? CityMapViewState.Success)?.city
+
+    Box (
+        modifier = modifier
+            .fillMaxSize(),
+    ) {
+        MapContent(
+            city = city,
+        )
+
+        if (viewState is CityMapViewState.Error) {
+            LaunchedEffect(Unit) {
+                snackbarHostState.showSnackbar(message = "City not found")
+            }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp),
+        )
     }
 }
 
 @Composable
 private fun MapContent(
-    city: City,
-    modifier: Modifier
+    city: City?,
+    modifier: Modifier = Modifier,
 ) {
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(
-            LatLng(city.geoCoordinates.latitude, city.geoCoordinates.longitude),
-            11f,
-        )
+    val cameraPositionState = rememberCameraPositionState()
+    val markerState = rememberUpdatedMarkerState()
+
+    LaunchedEffect(city?.id) {
+        city?.let {
+            val target = LatLng(
+                it.geoCoordinates.latitude,
+                it.geoCoordinates.longitude,
+            )
+            markerState.position = target
+            with(cameraPositionState) {
+                animate(
+                    update = CameraUpdateFactory.newLatLngZoom(target, 6f),
+                    durationMs = 400,
+                )
+                animate(
+                    update = CameraUpdateFactory.zoomTo(11f),
+                    durationMs = 400,
+                )
+            }
+        }
     }
-    val markerState = rememberUpdatedMarkerState(
-        position = LatLng(
-            city.geoCoordinates.latitude,
-            city.geoCoordinates.longitude,
-        ),
-    )
+
     GoogleMap(
         modifier = modifier
             .fillMaxSize(),
         cameraPositionState = cameraPositionState,
     ) {
-        Marker(
-            state = markerState,
-            title = city.name,
-            snippet = city.country,
-        )
+        city?.let {
+            Marker(
+                state = markerState,
+                title = it.name,
+                snippet = it.country,
+            )
+        }
     }
 }

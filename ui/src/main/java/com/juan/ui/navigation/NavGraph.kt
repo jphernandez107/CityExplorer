@@ -24,9 +24,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.juan.ui.citylist.screen.CityListScreen
+import com.juan.ui.citylist.CityListViewModel
+import com.juan.ui.citylist.screen.ResponsiveCityListScreen
 import com.juan.ui.details.CityDetailsViewModel
 import com.juan.ui.details.screen.CityDetailsScreen
+import com.juan.ui.map.CityMapViewModel
 import com.juan.ui.map.screen.CityMapScreen
 
 @Composable
@@ -38,7 +40,7 @@ fun AppNavHost(
     val currentDestination = currentBackStackEntry?.destination
 
     val showBackButton = currentDestination?.route != Screen.CityList.route
-    val showTopBar = currentDestination?.route != Screen.CityMap.route
+    val showTopBar = currentDestination?.route == Screen.CityDetails.route
     var cityDetailsTitle by remember { mutableStateOf("City Details") }
     val title = when (currentDestination?.route) {
         Screen.CityList.route -> "City List"
@@ -46,6 +48,9 @@ fun AppNavHost(
         Screen.CityDetails.route -> cityDetailsTitle
         else -> "City Explorer"
     }
+
+    val cityListViewModel = hiltViewModel<CityListViewModel>()
+    val cityMapViewModel = hiltViewModel<CityMapViewModel>()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -67,14 +72,18 @@ fun AppNavHost(
             composable(
                 route = Screen.CityList.route,
             ) {
-                CityListScreen(
+                ResponsiveCityListScreen(
+                    cityListViewModel = cityListViewModel,
+                    cityMapViewModel = cityMapViewModel,
                     navController = navController,
                 )
             }
             composable(
                 route = Screen.CityMap.route
             ) {
-                CityMapScreen()
+                CityMapScreen(
+                    cityMapViewModel = cityMapViewModel,
+                )
             }
             composable(
                 route = Screen.CityDetails.route,

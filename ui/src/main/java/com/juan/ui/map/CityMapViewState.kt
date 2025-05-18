@@ -8,7 +8,7 @@ import com.juan.domain.model.City
 sealed interface CityMapViewState {
 
     @Immutable
-    data object Loading : CityMapViewState
+    data object NoSelection : CityMapViewState
 
     @Immutable
     data object Error : CityMapViewState

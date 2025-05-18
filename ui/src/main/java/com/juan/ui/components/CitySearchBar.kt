@@ -1,6 +1,5 @@
 package com.juan.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,12 +14,14 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.juan.ui.citylist.SearchBarViewState
 
@@ -34,12 +35,11 @@ internal fun CitySearchBar(
     Column(
         modifier = Modifier
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = horizontalPadding, vertical = 8.dp),
+                .padding(start = horizontalPadding, end = horizontalPadding, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TextField(
@@ -96,5 +96,18 @@ private fun FilterOption(
             )
         },
         shape = RoundedCornerShape(8.dp),
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CitySearchBarPreview() = MaterialTheme {
+    CitySearchBar(
+        searchBarViewState = SearchBarViewState(
+            searchQuery = "Madrid",
+            onlyFavorites = true,
+        ),
+        onQueryChanged = {},
+        onFavoriteToggle = {},
     )
 }

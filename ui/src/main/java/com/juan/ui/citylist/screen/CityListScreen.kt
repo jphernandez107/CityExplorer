@@ -1,5 +1,7 @@
 package com.juan.ui.citylist.screen
 
+import android.content.res.Configuration
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -26,6 +30,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,29 +52,35 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun CityListScreen(
-    viewModel: CityListViewModel = hiltViewModel(),
     navController: NavController,
+    lazyListState: LazyListState,
+    modifier: Modifier = Modifier,
+    viewModel: CityListViewModel = hiltViewModel(),
 ) {
     val viewState by viewModel.viewState.collectAsState()
     val searchBarViewState by viewModel.searchBarViewState.collectAsState()
     CityListScreenContent(
+        modifier = modifier,
         viewState = viewState,
         searchBarViewState = searchBarViewState,
+        lazyListState = lazyListState,
         onEvent = viewModel::onEvent,
     )
 
     val lifecycleOwner = LocalLifecycleOwner.current
+    val isPortrait = with(LocalConfiguration.current) {
+        orientation == Configuration.ORIENTATION_PORTRAIT
+    }
     LaunchedEffect(Unit) {
         viewModel.navigationEvent
             .flowWithLifecycle(lifecycleOwner.lifecycle)
             .collectLatest { event ->
                 when (event) {
-                    is CityNavigationEvent.NavigateToMap -> {
+                    is CityNavigationEvent.NavigateToMapIfPortrait -> if (isPortrait) {
                         navController.navigate(Screen.CityMap.createRoute(event.cityId))
                     }
-                    is CityNavigationEvent.NavigateToCityDetails -> {
+                    is CityNavigationEvent.NavigateToCityDetails ->
                         navController.navigate(Screen.CityDetails.createRoute(event.cityId))
-                    }
                 }
             }
     }
@@ -77,12 +89,14 @@ fun CityListScreen(
 
 @Composable
 private fun CityListScreenContent(
+    modifier: Modifier = Modifier,
     viewState: CityListViewState,
     searchBarViewState: SearchBarViewState,
+    lazyListState: LazyListState = rememberLazyListState(),
     onEvent: (CityListUiEvent) -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
     ) {
         CitySearchBar(
             searchBarViewState = searchBarViewState,
@@ -107,7 +121,9 @@ private fun CityListScreenContent(
                 }
             }
             is CityListViewState.Success -> {
-                LazyColumn {
+                LazyColumn(
+                    state = lazyListState,
+                ) {
                     items(viewState.cities, key = { it.id }) { city ->
                         CityItemCard(
                             city = city,
@@ -131,10 +147,16 @@ private fun CityItemCard(
     onDetailsClick: () -> Unit = {},
     onFavoriteToggle: () -> Unit,
 ) {
+    val borderColor = if (city.isSelected) {
+        MaterialTheme.colorScheme.outline
+    } else {
+        Color.Transparent
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
             .clickable { onRowClick() },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(8.dp),
@@ -177,7 +199,7 @@ private fun CityItemCard(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun CityListScreenPreview() = MaterialTheme {
     CityListScreenContent(
@@ -196,9 +218,10 @@ private fun CityListScreenPreview() = MaterialTheme {
                     country = "USA",
                     favoriteState = FavoriteState.NotFavorite,
                     coordinates = "34.0522° N, 118.2437° W",
+                    isSelected = true,
                 ),
                 CityItemViewState(
-                    id = 2,
+                    id = 3,
                     name = "Miami",
                     country = "USA",
                     favoriteState = FavoriteState.Loading,

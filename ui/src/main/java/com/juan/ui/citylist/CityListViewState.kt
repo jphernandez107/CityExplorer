@@ -33,4 +33,5 @@ data class CityItemViewState(
     val country: String,
     val coordinates: String,
     val favoriteState: FavoriteState,
+    val isSelected: Boolean = false,
 )

@@ -1,7 +1,7 @@
 package com.juan.ui.citylist
 
 sealed interface CityNavigationEvent {
-    data class NavigateToMap(
+    data class NavigateToMapIfPortrait(
         val cityId: Long,
     ) : CityNavigationEvent
     data class NavigateToCityDetails(
