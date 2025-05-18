@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.juan.domain.model.City
 import com.juan.domain.usecase.FetchAndCacheCitiesUseCase
+import com.juan.domain.usecase.FilterCitiesUseCase
 import com.juan.domain.usecase.GetAllCitiesUseCase
 import com.juan.domain.usecase.UpdateCityFavoriteStatusUseCase
 import com.juan.ui.shared.CitySelectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,6 +28,7 @@ class CityListViewModel @Inject constructor(
     private val fetchAndCacheCitiesUseCase: FetchAndCacheCitiesUseCase,
     private val getAllCitiesUseCase: GetAllCitiesUseCase,
     private val updateCityFavoriteStatusUseCase: UpdateCityFavoriteStatusUseCase,
+    private val filterCitiesUseCase: FilterCitiesUseCase,
     private val citySelectionManager: CitySelectionManager,
 ) : ViewModel() {
 
@@ -58,17 +62,11 @@ class CityListViewModel @Inject constructor(
             getAllCitiesUseCase(),
             citySelectionManager.selectedCityId,
         ) { searchBarViewState, cities, selectedCity ->
-            val filteredCities = cities
-                .filter {
-                    if (searchBarViewState.onlyFavorites) {
-                        it.isFavorite
-                    } else {
-                        true
-                    }
-                }
-                .filter {
-                    it.name.startsWith(searchBarViewState.searchQuery)
-                }
+            val filteredCities = filterCitiesUseCase(
+                cities = cities,
+                prefix = searchBarViewState.searchQuery,
+                onlyFavorites = searchBarViewState.onlyFavorites
+            )
             filteredCities to selectedCity
         }
         .onEach { (result, selectedCity) ->
@@ -86,7 +84,7 @@ class CityListViewModel @Inject constructor(
         .catch { e ->
             e.printStackTrace()
             _viewState.value = CityListViewState.Error.General
-        }.launchIn(viewModelScope)
+        }.launchIn(viewModelScope + Dispatchers.IO)
     }
 
     fun onEvent(event: CityListUiEvent) {
@@ -95,15 +93,7 @@ class CityListViewModel @Inject constructor(
                 _searchBarViewState.update { it.copy(searchQuery = event.query) }
             }
             is CityListUiEvent.OnCityClick -> onCitySelected(event)
-            is CityListUiEvent.OnCityFavoriteClick -> {
-                setCityFavoriteStateToLoading(event.cityId)
-                viewModelScope.launch {
-                    updateCityFavoriteStatusUseCase(
-                        cityId = event.cityId,
-                        isFavorite = !event.favoriteState.toBoolean(),
-                    )
-                }
-            }
+            is CityListUiEvent.OnCityFavoriteClick -> onCityFavoriteClick(event)
             is CityListUiEvent.OnRefresh -> {
                 fetchCitiesFromApiIfNeeded()
             }
@@ -122,6 +112,23 @@ class CityListViewModel @Inject constructor(
         }
     }
 
+    private fun onCityFavoriteClick(event: CityListUiEvent.OnCityFavoriteClick) {
+        setCityFavoriteState(event.cityId, FavoriteState.Loading)
+        viewModelScope.launch(Dispatchers.IO) {
+            val stateToUpdate = !event.favoriteState.toBoolean()
+            val updateSuccessful = updateCityFavoriteStatusUseCase(
+                cityId = event.cityId,
+                isFavorite = stateToUpdate,
+            )
+            if (updateSuccessful) {
+                setCityFavoriteState(
+                    cityId = event.cityId,
+                    favoriteState = FavoriteState.from(stateToUpdate),
+                )
+            }
+        }
+    }
+
     private fun onCitySelected(event: CityListUiEvent.OnCityClick) {
         citySelectionManager.selectCityId(event.cityId)
         viewModelScope.launch {
@@ -133,13 +140,13 @@ class CityListViewModel @Inject constructor(
         }
     }
 
-    private fun setCityFavoriteStateToLoading(cityId: Long) {
+    private fun setCityFavoriteState(cityId: Long, favoriteState: FavoriteState) {
         _viewState.update {
             when (val state = it) {
                 is CityListViewState.Success -> state.copy(
                     cities = state.cities.map { city ->
                         if (city.id == cityId) {
-                            city.copy(favoriteState = FavoriteState.Loading)
+                            city.copy(favoriteState = favoriteState)
                         } else {
                             city
                         }

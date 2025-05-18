@@ -14,4 +14,8 @@ kotlin {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(libs.kotlinx.coroutines.core)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.truth)
 }

@@ -2,6 +2,7 @@ package com.juan.di.modules
 
 import com.juan.domain.repository.CityRepository
 import com.juan.domain.usecase.FetchAndCacheCitiesUseCase
+import com.juan.domain.usecase.FilterCitiesUseCase
 import com.juan.domain.usecase.GetAllCitiesUseCase
 import com.juan.domain.usecase.GetCityByIdUseCase
 import com.juan.domain.usecase.UpdateCityFavoriteStatusUseCase
@@ -33,4 +34,8 @@ object UseCaseModule {
     fun provideGetCityByIdUseCase(
         cityRepository: CityRepository
     ): GetCityByIdUseCase = GetCityByIdUseCase(cityRepository)
+
+    @Provides
+    fun provideFilterCitiesUseCase(): FilterCitiesUseCase =
+        FilterCitiesUseCase()
 }
