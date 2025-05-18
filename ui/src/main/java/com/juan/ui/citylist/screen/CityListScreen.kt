@@ -101,7 +101,8 @@ private fun CityListScreenContent(
         CitySearchBar(
             searchBarViewState = searchBarViewState,
             onQueryChanged = { onEvent(CityListUiEvent.OnSearchQueryChange(it)) },
-            onFavoriteToggle = { onEvent(CityListUiEvent.OnOnlyFavoritesClick) }
+            onFavoriteToggle = { onEvent(CityListUiEvent.OnOnlyFavoritesClick) },
+            onClearClick = { onEvent(CityListUiEvent.OnSearchQueryChange("")) }
         )
 
         when (viewState) {

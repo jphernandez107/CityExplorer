@@ -8,16 +8,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,6 +36,7 @@ internal fun CitySearchBar(
     searchBarViewState: SearchBarViewState,
     onQueryChanged: (String) -> Unit,
     onFavoriteToggle: () -> Unit,
+    onClearClick: () -> Unit,
 ) {
     val horizontalPadding = 16.dp
     Column(
@@ -49,10 +56,9 @@ internal fun CitySearchBar(
                 placeholder = { Text("Search cities...") },
                 singleLine = true,
                 trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                        tint = IconButtonDefaults.iconButtonColors().contentColor,
+                    TrailingIcon(
+                        showClearButton = searchBarViewState.searchQuery.isNotEmpty(),
+                        onClearClick = onClearClick,
                     )
                 }
             )
@@ -80,6 +86,35 @@ internal fun CitySearchBar(
 }
 
 @Composable
+private fun TrailingIcon(
+    modifier: Modifier = Modifier,
+    showClearButton: Boolean,
+    onClearClick: () -> Unit,
+) {
+    val icon = if (showClearButton) {
+        Icons.Default.Clear
+    } else {
+        Icons.Default.Search
+    }
+    IconButton(
+        onClick = onClearClick,
+        enabled = showClearButton,
+        colors = IconButtonDefaults.iconButtonColors().copy(
+            contentColor = IconButtonDefaults.iconButtonColors().contentColor,
+            disabledContentColor = IconButtonDefaults.iconButtonColors().contentColor,
+        )
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = "Trailing icon",
+            tint = IconButtonDefaults.iconButtonColors().contentColor,
+            modifier = modifier
+                .padding(8.dp)
+        )
+    }
+}
+
+@Composable
 private fun FilterOption(
     selected: Boolean,
     icon: ImageVector,
@@ -102,12 +137,14 @@ private fun FilterOption(
 @Preview(showBackground = true)
 @Composable
 private fun CitySearchBarPreview() = MaterialTheme {
+    var searchQuery by remember { mutableStateOf("Madrid") }
     CitySearchBar(
         searchBarViewState = SearchBarViewState(
-            searchQuery = "Madrid",
+            searchQuery = searchQuery,
             onlyFavorites = true,
         ),
-        onQueryChanged = {},
+        onQueryChanged = { searchQuery = it },
         onFavoriteToggle = {},
+        onClearClick = { searchQuery = "" },
     )
 }
