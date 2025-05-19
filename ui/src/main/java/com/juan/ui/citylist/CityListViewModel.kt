@@ -9,7 +9,7 @@ import com.juan.domain.usecase.GetAllCitiesUseCase
 import com.juan.domain.usecase.UpdateCityFavoriteStatusUseCase
 import com.juan.ui.shared.CitySelectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -30,6 +30,7 @@ class CityListViewModel @Inject constructor(
     private val updateCityFavoriteStatusUseCase: UpdateCityFavoriteStatusUseCase,
     private val filterCitiesUseCase: FilterCitiesUseCase,
     private val citySelectionManager: CitySelectionManager,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _viewState = MutableStateFlow<CityListViewState>(CityListViewState.Loading)
@@ -47,7 +48,7 @@ class CityListViewModel @Inject constructor(
     }
 
     private fun fetchCitiesFromApiIfNeeded() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             _viewState.value = CityListViewState.Loading
             fetchAndCacheCitiesUseCase()
                 .onFailure {
@@ -84,7 +85,7 @@ class CityListViewModel @Inject constructor(
         .catch { e ->
             e.printStackTrace()
             _viewState.value = CityListViewState.Error.General
-        }.launchIn(viewModelScope + Dispatchers.IO)
+        }.launchIn(viewModelScope + ioDispatcher)
     }
 
     fun onEvent(event: CityListUiEvent) {
@@ -114,7 +115,7 @@ class CityListViewModel @Inject constructor(
 
     private fun onCityFavoriteClick(event: CityListUiEvent.OnCityFavoriteClick) {
         setCityFavoriteState(event.cityId, FavoriteState.Loading)
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val stateToUpdate = !event.favoriteState.toBoolean()
             val updateSuccessful = updateCityFavoriteStatusUseCase(
                 cityId = event.cityId,

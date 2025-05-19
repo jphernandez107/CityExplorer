@@ -1,6 +1,7 @@
 package com.juan.ui.citylist.screen
 
 import android.content.res.Configuration
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -87,9 +89,9 @@ fun CityListScreen(
     }
 }
 
-
+@VisibleForTesting
 @Composable
-private fun CityListScreenContent(
+internal fun CityListScreenContent(
     modifier: Modifier = Modifier,
     viewState: CityListViewState,
     searchBarViewState: SearchBarViewState,
@@ -165,8 +167,9 @@ private fun CityListContent(
     }
 }
 
+@VisibleForTesting
 @Composable
-private fun CityItemCard(
+internal fun CityItemCard(
     city: CityItemViewState,
     onRowClick: () -> Unit,
     onDetailsClick: () -> Unit = {},
@@ -179,6 +182,7 @@ private fun CityItemCard(
     }
     Card(
         modifier = Modifier
+            .testTag("CityCard_${city.id}")
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .border(2.dp, borderColor, RoundedCornerShape(12.dp))
@@ -216,6 +220,8 @@ private fun CityItemCard(
                 IconButton(
                     onClick = onFavoriteToggle,
                     enabled = city.favoriteState !is FavoriteState.Loading,
+                    modifier = Modifier
+                        .testTag("FavoriteIcon_${city.id}")
                 ) {
                     FavoriteIcon(city.favoriteState)
                 }
