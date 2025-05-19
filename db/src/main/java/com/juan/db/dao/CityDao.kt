@@ -15,9 +15,6 @@ interface CityDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCities(cities: List<CityEntity>)
 
-    @Query("UPDATE cities SET isFavorite = :isFavorite WHERE id = :cityId")
-    suspend fun updateCityFavoriteStatus(cityId: Long, isFavorite: Boolean): Int
-
     @Query("SELECT EXISTS(SELECT 1 FROM cities LIMIT 1)")
     suspend fun hasCities(): Boolean
 

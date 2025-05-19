@@ -126,10 +126,10 @@ class CityListViewModel @Inject constructor(
                 cityId = event.cityId,
                 isFavorite = stateToUpdate,
             )
-            if (updateSuccessful) {
+            if (!updateSuccessful) {
                 setCityFavoriteState(
                     cityId = event.cityId,
-                    favoriteState = FavoriteState.from(stateToUpdate),
+                    favoriteState = event.favoriteState,
                 )
             }
         }

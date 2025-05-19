@@ -27,4 +27,7 @@ object DatabaseModule {
 
     @Provides
     fun provideCityDao(db: CityDatabase) = db.cityDao()
+
+    @Provides
+    fun provideFavoriteCityDao(db: CityDatabase) = db.favoriteCityDao()
 }

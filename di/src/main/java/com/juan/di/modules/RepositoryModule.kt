@@ -3,6 +3,7 @@ package com.juan.di.modules
 import com.juan.data.repository.CityRepositoryImpl
 import com.juan.data.service.CityApi
 import com.juan.db.dao.CityDao
+import com.juan.db.dao.FavoriteCityDao
 import com.juan.domain.repository.CityRepository
 import dagger.Module
 import dagger.Provides
@@ -19,8 +20,10 @@ object RepositoryModule {
     fun provideCityRepository(
         cityApi: CityApi,
         cityDao: CityDao,
+        favoriteCityDao: FavoriteCityDao,
     ): CityRepository = CityRepositoryImpl(
         api = cityApi,
-        cityDao = cityDao
+        cityDao = cityDao,
+        favoriteCityDao = favoriteCityDao,
     )
 }

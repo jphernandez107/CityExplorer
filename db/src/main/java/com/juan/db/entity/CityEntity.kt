@@ -8,7 +8,6 @@ import androidx.room.PrimaryKey
     tableName = "cities",
     indices = [
         Index(value = ["name"]),
-        Index(value = ["isFavorite"]),
     ],
 )
 data class CityEntity(
@@ -18,5 +17,4 @@ data class CityEntity(
     val latitude: Double,
     val longitude: Double,
     val coordinatesString: String,
-    val isFavorite: Boolean = false,
 )
