@@ -56,7 +56,6 @@ class CityListViewModel @Inject constructor(
             _viewState.value = CityListViewState.Loading.Network
             fetchAndCacheCitiesUseCase(forceRefresh)
                 .onSuccess {
-                    _viewState.update { CityListViewState.Loading.Local }
                     onRefreshFinished.emit(Unit)
                 }
                 .onFailure {
@@ -83,12 +82,13 @@ class CityListViewModel @Inject constructor(
             val cities = result.map { city ->
                 city.toCityItemViewState(city.id == selectedCity)
             }
-            _viewState.value = if (cities.isEmpty()) {
-                CityListViewState.Empty
-            } else {
-                CityListViewState.Success(
-                    cities = cities,
-                )
+            _viewState.update {
+                when {
+                    cities.isEmpty() &&
+                        it is CityListViewState.Loading.Network -> CityListViewState.Loading.Local
+                    cities.isEmpty() -> CityListViewState.Empty
+                    else -> CityListViewState.Success(cities)
+                }
             }
         }
         .catch { e ->
