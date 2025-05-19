@@ -1,5 +1,6 @@
 package com.juan.ui.citylist
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.juan.domain.model.City
@@ -42,11 +43,12 @@ class CityListViewModel @Inject constructor(
     private val _navigationEvent = MutableSharedFlow<CityNavigationEvent>()
     val navigationEvent = _navigationEvent.asSharedFlow()
 
-    private val onRefreshFinished = MutableSharedFlow<Unit>()
+    @VisibleForTesting
+    internal val onRefreshFinished = MutableSharedFlow<Unit>(replay = 1)
 
     init {
-        fetchCitiesFromApiIfNeeded()
         observeSearchQuery()
+        fetchCitiesFromApiIfNeeded()
     }
 
     private fun fetchCitiesFromApiIfNeeded(forceRefresh: Boolean = false) {

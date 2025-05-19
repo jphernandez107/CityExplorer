@@ -35,7 +35,7 @@ import org.junit.Test
 @ExperimentalCoroutinesApi
 class CityListViewModelTest {
 
-    private val fetchCitiesUseCase: FetchAndCacheCitiesUseCase = mockk()
+    private val fetchCitiesUseCase: FetchAndCacheCitiesUseCase = mockk(relaxed = true)
     private val getAllCitiesUseCase: GetAllCitiesUseCase = mockk()
     private val updateCityFavoriteStatusUseCase: UpdateCityFavoriteStatusUseCase = mockk()
     private val filterCitiesUseCase = FilterCitiesUseCase()
@@ -124,7 +124,7 @@ class CityListViewModelTest {
 
     @Test
     fun `refresh triggers fetch and updates UI state on failure`() = runTest(testDispatcher) {
-        coEvery { fetchCitiesUseCase() } returns Result.failure(RuntimeException("Network error"))
+        coEvery { fetchCitiesUseCase(true) } returns Result.failure(RuntimeException("Network error"))
 
         advanceUntilIdle()
         viewModel.onEvent(CityListUiEvent.OnRefresh)
@@ -136,13 +136,13 @@ class CityListViewModelTest {
 
     @Test
     fun `refresh triggers fetch and keeps previous UI state on success`() = runTest(testDispatcher) {
-        coEvery { fetchCitiesUseCase() } returns Result.success(Unit)
+        coEvery { fetchCitiesUseCase(true) } returns Result.success(Unit)
 
         viewModel.onEvent(CityListUiEvent.OnRefresh)
         advanceUntilIdle()
 
         val state = viewModel.viewState.value
-        assertTrue(state is CityListViewState.Success || state is CityListViewState.Loading)
+        assertTrue(state is CityListViewState.Success)
     }
 
     @Test
