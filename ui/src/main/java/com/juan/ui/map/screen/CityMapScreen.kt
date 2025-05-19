@@ -92,16 +92,15 @@ private fun MapContent(
     city: City?,
     modifier: Modifier = Modifier,
 ) {
-    val cameraPositionState = rememberCameraPositionState()
+    val cameraPositionState = rememberCameraPositionState(city?.id?.toString())
     val markerState = rememberUpdatedMarkerState()
 
-    LaunchedEffect(city?.id) {
+    LaunchedEffect(city?.geoCoordinates) {
         city?.let {
             val target = LatLng(
                 it.geoCoordinates.latitude,
                 it.geoCoordinates.longitude,
             )
-            markerState.position = target
             with(cameraPositionState) {
                 animate(
                     update = CameraUpdateFactory.newLatLngZoom(target, 6f),
@@ -112,6 +111,15 @@ private fun MapContent(
                     durationMs = 400,
                 )
             }
+        }
+    }
+
+    LaunchedEffect(city) {
+        city?.let {
+            markerState.position = LatLng(
+                it.geoCoordinates.latitude,
+                it.geoCoordinates.longitude,
+            )
         }
     }
 
