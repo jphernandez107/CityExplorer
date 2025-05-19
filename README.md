@@ -51,13 +51,17 @@ app/
 
 ## 📸 Capturas de Pantalla
 
-| Portrait (Lista)                               | Portrait (Mapa)                                | Landscape                                       |
-|------------------------------------------------|------------------------------------------------|-------------------------------------------------|
-| ![Lista](screenshots/CityExplorerPortrait.png) | ![Lista](screenshots/CityExplorerFullMap.png)  | ![Lista](screenshots/CityExplorerLandscape.png) |
+| Portrait (Lista)                               | Portrait (Mapa)                              |
+|------------------------------------------------|----------------------------------------------|
+| ![Lista](screenshots/CityExplorerPortrait.png) | ![Mapa](screenshots/CityExplorerFullMap.png) |
 
-| Detalles                                      | Solo Favoritos                                          |
-|-----------------------------------------------|---------------------------------------------------------|
-| ![Lista](screenshots/CityExplorerDetails.png) | ![Favoritos](screenshots/CityExplorerOnlyFavorites.png) |
+| Landscape                                           |
+|-----------------------------------------------------|
+| ![Landscape](screenshots/CityExplorerLandscape.png) |
+
+| Detalles                                         | Solo Favoritos                                          |
+|--------------------------------------------------|---------------------------------------------------------|
+| ![Detalles](screenshots/CityExplorerDetails.png) | ![Favoritos](screenshots/CityExplorerOnlyFavorites.png) |
 
 ---
 
