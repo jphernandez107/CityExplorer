@@ -33,7 +33,7 @@ class CityListViewModel @Inject constructor(
     private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
-    private val _viewState = MutableStateFlow<CityListViewState>(CityListViewState.Loading)
+    private val _viewState = MutableStateFlow<CityListViewState>(CityListViewState.Loading.Network)
     val viewState = _viewState.asStateFlow()
 
     private val _searchBarViewState = MutableStateFlow(SearchBarViewState(""))
@@ -42,15 +42,21 @@ class CityListViewModel @Inject constructor(
     private val _navigationEvent = MutableSharedFlow<CityNavigationEvent>()
     val navigationEvent = _navigationEvent.asSharedFlow()
 
+    private val onRefreshFinished = MutableSharedFlow<Unit>()
+
     init {
         fetchCitiesFromApiIfNeeded()
         observeSearchQuery()
     }
 
-    private fun fetchCitiesFromApiIfNeeded() {
+    private fun fetchCitiesFromApiIfNeeded(forceRefresh: Boolean = false) {
         viewModelScope.launch(ioDispatcher) {
-            _viewState.value = CityListViewState.Loading
-            fetchAndCacheCitiesUseCase()
+            _viewState.value = CityListViewState.Loading.Network
+            fetchAndCacheCitiesUseCase(forceRefresh)
+                .onSuccess {
+                    _viewState.update { CityListViewState.Loading.Local }
+                    onRefreshFinished.emit(Unit)
+                }
                 .onFailure {
                     _viewState.value = CityListViewState.Error.Network
                 }
@@ -62,7 +68,8 @@ class CityListViewModel @Inject constructor(
             searchBarViewState,
             getAllCitiesUseCase(),
             citySelectionManager.selectedCityId,
-        ) { searchBarViewState, cities, selectedCity ->
+            onRefreshFinished,
+        ) { searchBarViewState, cities, selectedCity, _ ->
             val filteredCities = filterCitiesUseCase(
                 cities = cities,
                 prefix = searchBarViewState.searchQuery,
@@ -95,9 +102,7 @@ class CityListViewModel @Inject constructor(
             }
             is CityListUiEvent.OnCityClick -> onCitySelected(event)
             is CityListUiEvent.OnCityFavoriteClick -> onCityFavoriteClick(event)
-            is CityListUiEvent.OnRefresh -> {
-                fetchCitiesFromApiIfNeeded()
-            }
+            is CityListUiEvent.OnRefresh -> fetchCitiesFromApiIfNeeded(true)
             is CityListUiEvent.OnOnlyFavoritesClick -> {
                 _searchBarViewState.update { it.copy(onlyFavorites = !it.onlyFavorites) }
             }

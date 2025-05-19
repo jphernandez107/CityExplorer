@@ -5,8 +5,14 @@ import androidx.compose.runtime.Stable
 
 @Stable
 sealed interface CityListViewState {
-    @Immutable
-    data object Loading: CityListViewState
+    @Stable
+    sealed interface Loading: CityListViewState {
+        @Immutable
+        data object Network : Loading
+
+        @Immutable
+        data object Local : Loading
+    }
 
     @Immutable
     data object Empty : CityListViewState

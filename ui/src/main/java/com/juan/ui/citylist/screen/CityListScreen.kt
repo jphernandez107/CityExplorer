@@ -22,10 +22,13 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -116,6 +119,7 @@ internal fun CityListScreenContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CityListContent(
     viewState: CityListViewState,
@@ -123,31 +127,41 @@ private fun CityListContent(
     onEvent: (CityListUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when (viewState) {
-        is CityListViewState.Loading -> {
-            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox (
+        state = pullToRefreshState,
+        isRefreshing = viewState is CityListViewState.Loading.Network,
+        onRefresh = { onEvent(CityListUiEvent.OnRefresh) },
+        modifier = modifier.fillMaxSize(),
+    ) {
+        val commonModifier = Modifier
+            .fillMaxSize()
+            .padding(top = 24.dp)
+        LazyColumn(
+            modifier = Modifier.fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            state = lazyListState,
+        ) {
+            when (viewState) {
+                is CityListViewState.Loading.Local -> item(key = "loading") {
+                    Box(commonModifier, contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
 
-        is CityListViewState.Error -> {
-            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Something went wrong. Try refreshing.")
-            }
-        }
+                is CityListViewState.Error -> item(key = "error") {
+                    Box(commonModifier, contentAlignment = Alignment.Center) {
+                        Text("Something went wrong. Try refreshing.")
+                    }
+                }
 
-        is CityListViewState.Empty -> {
-            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No cities match your search.")
-            }
-        }
+                is CityListViewState.Empty -> item(key = "empty") {
+                    Box(commonModifier, contentAlignment = Alignment.Center) {
+                        Text("No cities match your search.")
+                    }
+                }
 
-        is CityListViewState.Success -> {
-            LazyColumn(
-                modifier = modifier.fillMaxHeight(),
-                state = lazyListState,
-            ) {
-                items(viewState.cities, key = { it.id }) { city ->
+                is CityListViewState.Success -> items(viewState.cities, key = { it.id }) { city ->
                     CityItemCard(
                         city = city,
                         onRowClick = { onEvent(CityListUiEvent.OnCityClick(city.id)) },
@@ -161,6 +175,12 @@ private fun CityListContent(
                             )
                         }
                     )
+                }
+
+                is CityListViewState.Loading.Network -> item(key = "loading_network") {
+                    Box(commonModifier.padding(top = 80.dp), contentAlignment = Alignment.Center) {
+                        Text("Fetching cities from network")
+                    }
                 }
             }
         }
